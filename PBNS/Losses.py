@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 import tensorflow as tf
-import tensorflow_graphics as tfg
+import tensorflow_graphics.geometry.representation.mesh.normals as tfg
 from scipy.spatial import cKDTree
 	
 def edge_loss(x, y_e, E, weights):
@@ -33,8 +33,8 @@ def bend_loss(x, F, neighF, weights):
 
 """ COLLISION FUNCTIONS START """
 def collision_loss(V, F, B, B_F, layers, thr=.004, stop_gradient=False):
-	V_vn = tfg.geometry.representation.mesh.normals.vertex_normals(V, tf.tile(F[None], [V.shape[0], 1, 1]))
-	B_vn = tfg.geometry.representation.mesh.normals.vertex_normals(B, tf.tile(B_F[None], [B.shape[0], 1, 1]))
+	V_vn = tfg.vertex_normals(V, tf.tile(F[None], [V.shape[0], 1, 1]))
+	B_vn = tfg.vertex_normals(B, tf.tile(B_F[None], [B.shape[0], 1, 1]))
 	loss = 0
 	vcount = np.array([0] * len(layers), np.float32)
 	for i in range(len(layers)):
@@ -67,7 +67,7 @@ def collision_loss(V, F, B, B_F, layers, thr=.004, stop_gradient=False):
 
 def _nearest_neighbour(V, B):
 	tree = cKDTree(B.numpy())
-	return tree.query(V.numpy(), n_jobs=-1)[1]
+	return tree.query(V.numpy())[1]
 
 @tf.function
 def _tf_nn_parallel(V, B):

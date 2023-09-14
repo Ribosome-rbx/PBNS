@@ -71,3 +71,11 @@ print("")
 print("")
 print("DONE!")
 print("")
+
+# transfer pc2 into npy
+from IO import readPC2
+for f in ['body.pc2', 'outfit.pc2']:
+	file_path = name + f
+	file = readPC2(file_path)
+	np.save(file_path.replace(".pc2", ".npy"), file['V'])
+print("pc2 to npy --> Done!")

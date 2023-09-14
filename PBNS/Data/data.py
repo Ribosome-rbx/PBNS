@@ -33,7 +33,8 @@ class Data:
 		smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/smpl/'
 		smpl_path += 'model_[G].pkl'.replace('[G]', 'm' if gender else 'f')
 		self.SMPL = SMPLModel(smpl_path, rest_pose)
-		self._shape = shape
+		self._shape = shape # betas (10,)
+
 		# TF Dataset
 		ds = tf.data.Dataset.from_tensor_slices(self._poses)
 		if mode == 'train': ds = ds.shuffle(self._n_samples)
