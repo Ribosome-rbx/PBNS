@@ -1,9 +1,9 @@
 import numpy as np
 
-rest_pose = np.zeros((24,3))
-rest_pose[0, 0] = np.pi / 2
-rest_pose[1, 2] = .15
-rest_pose[2, 2] = -.15
+# rest_pose = np.zeros((24,3))
+# rest_pose[0, 0] = np.pi / 2
+# rest_pose[1, 2] = .15
+# rest_pose[2, 2] = -.15
 
 # script usage
 usage_msg = "\t-g, --gpu:			id of the GPU to use,\n" + \

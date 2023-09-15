@@ -1,5 +1,6 @@
 import os
 import sys
+import pickle
 from getopt import getopt
 import numpy as np
 import tensorflow as tf
@@ -10,8 +11,8 @@ from scipy.spatial import cKDTree
 from values import usage_msg
 
 def parse_args(train=True):
-	gpu_id, name, object, checkpoint = [None] * 4
-	opts, args = getopt(sys.argv[1:],'g:n:c:o:b:',['gpu=','name=','checkpoint=','object=','body='])
+	gpu_id, name, object, body, folder, checkpoint = [None] * 6
+	opts, args = getopt(sys.argv[1:],'g:n:c:o:b:f:',['gpu=','name=','checkpoint=','object=','body=','folder]'])
 	if args: wrong_args(args)
 	for opt, arg in opts:
 		if opt == '-g' or opt == '--gpu':
@@ -22,16 +23,25 @@ def parse_args(train=True):
 			object = arg
 		elif opt == '-b' or opt == '--body':
 			body = arg
+		elif opt == '-f' or opt == '--foler':
+			folder = arg
 		elif opt == '-c' or opt == '--checkpoint':
 			checkpoint = arg
 		else:
 			wrong_args(arg)
 	assert gpu_id is not None, 'Missing GPU id'
 	assert name is not None, 'Missing model name'
-	assert object is not None, 'Missing outfit .OBJ file'
-	assert body is not None, 'Missing body .MAT file'
 	assert train or checkpoint is not None, 'Missing model checkpoint'
-	return gpu_id, name, object, body, checkpoint
+	if folder is not None:
+		return gpu_id, name, folder, checkpoint
+	elif  object is not None and body is not None:
+		return gpu_id, name, object, body, checkpoint
+	else:
+		assert object is not None, 'Missing outfit .OBJ file'
+		assert body is not None, 'Missing body .MAT file'
+		assert folder is not None, 'Missing folder name'
+
+
 	
 def wrong_args(args):
 	print("")
@@ -176,3 +186,9 @@ def weights_prior(T, B, weights):
 	tree = cKDTree(B)
 	_, idx = tree.query(T)
 	return weights[idx]
+
+def pickle_load(file):
+    with open(file, 'rb') as f:
+        loadout = pickle.load(f, encoding='latin1')
+
+    return loadout

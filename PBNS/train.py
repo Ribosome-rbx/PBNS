@@ -17,7 +17,23 @@ from util import *
 from IO import writePC2Frames
 
 """ PARSE ARGS """
-gpu_id, name, object, body, checkpoint = parse_args()
+if len(parse_args()) == 4:
+	gpu_id, name, folder, checkpoint = parse_args()
+	# object, body
+	type = folder.split('_')[-1]
+	type = 'pants' if type.lower() == "template" else type.lower()
+	object = f"../Templates/{folder}/{type}"
+	body = f"../Templates/{folder}/{folder}"
+	rest_pose = pickle_load(os.path.dirname(os.path.realpath(__file__))+f"/Templates/{folder}/restpose.pkl")
+
+if len(parse_args()) == 5:
+	gpu_id, name, object, body, checkpoint = parse_args()
+	rest_pose = np.zeros((24,3))
+	rest_pose[0, 0] = np.pi / 2
+	rest_pose[1, 2] = .15
+	rest_pose[2, 2] = -.15
+
+
 if checkpoint is not None:
 	checkpoint = os.path.abspath(os.path.dirname(__file__)) + '/checkpoints/' + checkpoint
 	
@@ -52,7 +68,7 @@ optimizer = tf.optimizers.Adam()
 """ DATA """
 print("Reading data...")
 tr_poses = 'Data/train.npy'
-tr_data = Data(tr_poses, model._shape, model._gender, batch_size=batch_size)
+tr_data = Data(tr_poses, model._shape, model._gender, rest_pose, batch_size=batch_size)
 
 tr_steps = floor(tr_data._n_samples / batch_size)
 for epoch in range(num_epochs):

@@ -16,7 +16,7 @@ from IO import *
 from values import *
 
 class Data:	
-	def __init__(self, poses, shape, gender, batch_size=10, mode='train'):
+	def __init__(self, poses, shape, gender, rest_pose, batch_size=10, mode='train'):
 		"""
 		Args:
 		- poses: path to .npy file with poses
@@ -31,6 +31,7 @@ class Data:
 		self._n_samples = self._poses.shape[0]
 		# smpl
 		smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/smpl/'
+		# smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/../Templates/'
 		smpl_path += 'model_[G].pkl'.replace('[G]', 'm' if gender else 'f')
 		self.SMPL = SMPLModel(smpl_path, rest_pose)
 		self._shape = shape # betas (10,)

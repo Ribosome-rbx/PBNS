@@ -1,4 +1,5 @@
 import sys
+import torch
 import numpy as np
 import pickle
 
@@ -34,6 +35,9 @@ class SMPLModel():
 			i: id_to_col[self.kintree_table[0, i]]
 			for i in range(1, self.kintree_table.shape[1])
 		}
+
+	def forward(self):
+		return None
 
 	def set_params(self, pose=None, beta=None, trans=None, with_body=False):
 		"""
@@ -72,6 +76,9 @@ class SMPLModel():
 		"""
 		# how beta affect body shape
 		v_shaped = self.shapedirs.dot(beta) + self.v_template
+		# beta = torch.tensor(beta)
+		# v_shaped = torch.einsum('bl,mkl->bmk', [beta[None,:], self.shapedirs]) + self.v_template
+
 		# joints location
 		J = self.J_regressor.dot(v_shaped)
 		# align root joint with origin
@@ -110,7 +117,7 @@ class SMPLModel():
 			T = np.tensordot(self.weights, G, axes=[[1], [0]])
 			rest_shape_h = np.hstack((v_posed, np.ones([v_posed.shape[0], 1])))
 			v = np.matmul(T, rest_shape_h.reshape([-1, 4, 1])).reshape([-1, 4])[:, :3]
-			
+
 		return G, v
 
 	def rodrigues(self, r):
