@@ -26,19 +26,25 @@ class Data:
 		- shuffle: shuffle
 		"""
 		# Read sample list
+		# poses = os.path.dirname(os.path.abspath(__file__)) + "/../" + poses
+		# breakpoint()
 		self._poses = np.load(poses)	
 		if self._poses.dtype == np.float64: self._poses = np.float32(self._poses)
 		self._n_samples = self._poses.shape[0]
 		# smpl
-		smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/smpl/'
-		# smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/../Templates/'
-		smpl_path += 'model_[G].pkl'.replace('[G]', 'm' if gender else 'f')
-		self.SMPL = SMPLModel(smpl_path, rest_pose)
+		# smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/smpl/'
+		smpl_path = os.path.dirname(os.path.abspath(__file__)) + '/../Templates/'
+		gender = 'MALE' if gender else 'FEMALE'
+		smpl_path += 'SMPLX_[G].npz'.replace('[G]', gender)
+		# smpl_path += 'model_[G].pkl'.replace('[G]', 'm' if gender else 'f')
+		self.SMPL = SMPLModel(smpl_path, gender, rest_pose)
 		self._shape = shape # betas (10,)
+		# G, v = self.SMPL.forward(self._poses[0], with_body=True)	
+		# breakpoint()
 
 		# TF Dataset
 		ds = tf.data.Dataset.from_tensor_slices(self._poses)
-		if mode == 'train': ds = ds.shuffle(self._n_samples)
+		# if mode == 'train': ds = ds.shuffle(self._n_samples)
 		ds = ds.map(self.tf_map, num_parallel_calls=batch_size)
 		ds = ds.batch(batch_size=batch_size)
 		self._iterator = ds

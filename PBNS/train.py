@@ -17,21 +17,22 @@ from util import *
 from IO import writePC2Frames
 
 """ PARSE ARGS """
-if len(parse_args()) == 4:
-	gpu_id, name, folder, checkpoint = parse_args()
-	# object, body
-	type = folder.split('_')[-1]
-	type = 'pants' if type.lower() == "template" else type.lower()
-	object = f"../Templates/{folder}/{type}"
-	body = f"../Templates/{folder}/{folder}"
-	rest_pose = pickle_load(os.path.dirname(os.path.realpath(__file__))+f"/Templates/{folder}/restpose.pkl")
+# if len(parse_args()) == 4:
+	# gpu_id, name, folder, checkpoint = parse_args()
+gpu_id, name, folder, checkpoint= '1', '00123_Inner', '00123_Inner', None
+# object, body
+type = folder.split('_')[-1]
+type = 'pants' if type.lower() == "template" else type.lower()
+object = f"../Templates/{folder}/{type}"
+body = f"../Templates/{folder}/{folder}"
+rest_pose = pickle_load(os.path.dirname(os.path.realpath(__file__))+f"/Templates/{folder}/restpose.pkl")
 
-if len(parse_args()) == 5:
-	gpu_id, name, object, body, checkpoint = parse_args()
-	rest_pose = np.zeros((24,3))
-	rest_pose[0, 0] = np.pi / 2
-	rest_pose[1, 2] = .15
-	rest_pose[2, 2] = -.15
+# if len(parse_args()) == 5:
+# 	gpu_id, name, object, body, checkpoint = parse_args()
+# 	rest_pose = np.zeros((24,3))
+# 	rest_pose[0, 0] = np.pi / 2
+# 	rest_pose[1, 2] = .15
+# 	rest_pose[2, 2] = -.15
 
 
 if checkpoint is not None:
@@ -84,7 +85,7 @@ for epoch in range(num_epochs):
 	for poses, G, body in tr_data._iterator:
 		""" Train step """
 		with tf.GradientTape() as tape:
-			pred = model(poses, G)
+			pred = model(poses, G, np.array(tr_data.SMPL.transl))
 			# Losses & Metrics			
 			# cloth
 			L_edge, E_edge = edge_loss(pred, model._edges, model._E, weights=model._config['edge'])

@@ -9,6 +9,7 @@ from Model.PBNS import PBNS
 
 from util import parse_args, model_summary
 from IO import writeOBJ, writePC2Frames
+from util import *
 
 """
 This script will load a PBNS checkpoint
@@ -24,7 +25,15 @@ Store output animation data in 'results/' folder
 """
 
 """ PARSE ARGS """
-gpu_id, name, object, body, checkpoint = parse_args(train=False)
+# parse_args()
+gpu_id, name, folder, checkpoint= '1', '00123_Inner', '00123_Inner', '00123_Inner'
+type = folder.split('_')[-1]
+type = 'pants' if type.lower() == "template" else type.lower()
+object = f"../Templates/{folder}/{type}"
+body = f"../Templates/{folder}/{folder}"
+rest_pose = pickle_load(os.path.dirname(os.path.realpath(__file__))+f"/Templates/{folder}/restpose.pkl")
+
+# gpu_id, name, object, body, checkpoint = parse_args(train=False)
 name = os.path.abspath(os.path.dirname(__file__)) + '/results/' + name + '/'
 if not os.path.isdir(name):
 	os.mkdir(name)
@@ -46,7 +55,7 @@ model_summary(tgts)
 """ DATA """
 print("Reading data...")
 val_poses = 'Data/test.npy'
-val_data = Data(val_poses, model._shape, model._gender, batch_size=batch_size, mode='test')
+val_data = Data(val_poses, model._shape, model._gender, rest_pose, batch_size=batch_size, mode='test')
 val_steps = floor(val_data._n_samples / batch_size)
 
 """ CREATE BODY AND OUTFIT .OBJ FILES """
@@ -59,7 +68,7 @@ print("Evaluating...")
 print("--------------------------")
 step = 0
 for poses, G, body in val_data._iterator:
-	pred = model(poses, G)
+	pred = model(poses, G, np.array(val_data.SMPL.transl))
 	writePC2Frames(name + 'body.pc2', body.numpy())
 	writePC2Frames(name + 'outfit.pc2', pred.numpy())
 	writePC2Frames(name + 'rest.pc2', (model._T[None] + model.D).numpy())

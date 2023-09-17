@@ -3,6 +3,7 @@ import sys
 import numpy as np
 from scipy import sparse
 import tensorflow as tf
+import torch
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from Layers import *
@@ -11,6 +12,14 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from IO import *
 from util import *
 from values import *
+
+def write_obj(vertices, faces, filename):
+    with open(filename, 'w') as f:
+        for vertex in vertices:
+            f.write('v {} {} {}\n'.format(vertex[0], vertex[1], vertex[2]))
+        
+        for face in faces:
+            f.write('f {} {} {}\n'.format(face[0] + 1, face[1] + 1, face[2] + 1))
 
 class PBNS:
 	# Builds models
@@ -72,7 +81,7 @@ class PBNS:
 		# cloth area (to compute mass later)
 		self._precompute_area()
 		# blend weights initial value
-		self._W = weights_prior(self._T, self._body, self._body_weights)
+		self._W, self.idx = weights_prior(self._T, self._body, self._body_weights)
 		self._W /= np.sum(self._W, axis=-1, keepdims=True)
 		self._W = np.float32(self._W)
 		""" Outfit config """
@@ -184,7 +193,7 @@ class PBNS:
 	def _with_ones(self, X):
 		return tf.concat((X, tf.ones((*X.shape[:2], 1), tf.float32)), axis=-1)
 
-	def __call__(self, X, G):
+	def __call__(self, X, G, transl):
 		# X : poses as (B x 72)
 		# G : joint transformation matrices as (B x 24 x 4 x 4)
 		# Pose MLP
@@ -193,4 +202,6 @@ class PBNS:
 		# PSD
 		self.D = tf.einsum('ab,bcd->acd', X, self._psd)
 		# Compute skinning
-		return self._skinning(self._T[None] + self.D, G)
+		pred = self._skinning(self._T[None]-transl + self.D, G)
+		pred += transl
+		return pred

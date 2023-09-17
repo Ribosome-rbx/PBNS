@@ -185,7 +185,7 @@ def neigh_faces(F, E=None):
 def weights_prior(T, B, weights):
 	tree = cKDTree(B)
 	_, idx = tree.query(T)
-	return weights[idx]
+	return weights[idx], list(idx)
 
 def pickle_load(file):
     with open(file, 'rb') as f:
