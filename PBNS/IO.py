@@ -99,6 +99,13 @@ def writeOBJ(file, V, F):
 			if len(f) == 2:
 				line = line.replace('f ', 'l ')
 			file.write(line)
+def write_obj(filename, vertices, faces):
+    with open(filename, 'w') as f:
+        for vertex in vertices:
+            f.write('v {} {} {}\n'.format(vertex[0], vertex[1], vertex[2]))
+        
+        for face in faces:
+            f.write('f {} {} {}\n'.format(face[0] + 1, face[1] + 1, face[2] + 1))
 
 """
 Reads PC2 files, and proposed format PC16 files

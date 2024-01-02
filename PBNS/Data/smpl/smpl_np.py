@@ -61,40 +61,50 @@ class SMPLModel():
 	def forward(self, poses=None, with_body=True):
 		# If no shape and pose parameters are passed along, then use the
 		# ones from the module
-		assert poses.shape == (72,), "WRONG input poses, should be (24,3)"
-		poses = torch.tensor(poses, dtype=torch.float32)
-		global_orient = (poses[None,:3] if poses is not None else self.global_orient)
-		body_pose = poses[None,3:66] if poses is not None else self.body_pose
+		if not poses.shape == (72,):
+			poses = torch.tensor(poses, dtype=torch.float32)
+			global_orient = (poses[None,:3] if poses is not None else self.global_orient)
+			body_pose = poses[None,3:66] if poses is not None else self.body_pose
+			full_pose = poses.reshape(-1, 165)
 
-		# will not be changed by poses
-		left_hand_pose = self.left_hand_pose
-		right_hand_pose = self.right_hand_pose
+			# will not be changed by poses
+			betas = self.betas
+			expression = self.expression
+			transl = self.transl
+		else:
+			poses = torch.tensor(poses, dtype=torch.float32)
+			global_orient = (poses[None,:3] if poses is not None else self.global_orient)
+			body_pose = poses[None,3:66] if poses is not None else self.body_pose
 
-		jaw_pose = self.jaw_pose
-		leye_pose = self.leye_pose
-		reye_pose = self.reye_pose
-		betas = self.betas
-		expression = self.expression
-		transl = self.transl
+			# will not be changed by poses
+			left_hand_pose = self.left_hand_pose
+			right_hand_pose = self.right_hand_pose
 
-		if self.use_pca:
-			left_hand_pose = torch.einsum(
-				'bi,ij->bj', [left_hand_pose, self.left_hand_components])
-			right_hand_pose = torch.einsum(
-				'bi,ij->bj', [right_hand_pose, self.right_hand_components])
+			jaw_pose = self.jaw_pose
+			leye_pose = self.leye_pose
+			reye_pose = self.reye_pose
+			betas = self.betas
+			expression = self.expression
+			transl = self.transl
 
-		full_pose = torch.cat([global_orient.reshape(-1, 1, 3),
-								body_pose.reshape(-1, self.NUM_BODY_JOINTS, 3),
-								jaw_pose.reshape(-1, 1, 3),
-								leye_pose.reshape(-1, 1, 3),
-								reye_pose.reshape(-1, 1, 3),
-								left_hand_pose.reshape(-1, 15, 3),
-								right_hand_pose.reshape(-1, 15, 3)],
-								dim=1).reshape(-1, 165)
+			if self.use_pca:
+				left_hand_pose = torch.einsum(
+					'bi,ij->bj', [left_hand_pose, self.left_hand_components])
+				right_hand_pose = torch.einsum(
+					'bi,ij->bj', [right_hand_pose, self.right_hand_components])
 
-		# Add the mean pose of the model. Does not affect the body, only the
-		# hands when flat_hand_mean == False
-		full_pose += self.pose_mean
+			full_pose = torch.cat([global_orient.reshape(-1, 1, 3),
+									body_pose.reshape(-1, self.NUM_BODY_JOINTS, 3),
+									jaw_pose.reshape(-1, 1, 3),
+									leye_pose.reshape(-1, 1, 3),
+									reye_pose.reshape(-1, 1, 3),
+									left_hand_pose.reshape(-1, 15, 3),
+									right_hand_pose.reshape(-1, 15, 3)],
+									dim=1).reshape(-1, 165)
+
+			# Add the mean pose of the model. Does not affect the body, only the
+			# hands when flat_hand_mean == False
+			full_pose += self.pose_mean
 
 		batch_size = max(betas.shape[0], global_orient.shape[0],
 							body_pose.shape[0])

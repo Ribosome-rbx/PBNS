@@ -9,6 +9,8 @@ import scipy.io as sio
 from scipy.spatial import cKDTree
 
 from values import usage_msg
+from tensorflow.python.ops.numpy_ops import np_config
+np_config.enable_numpy_behavior()
 
 def parse_args(train=True):
 	gpu_id, name, object, body, folder, checkpoint = [None] * 6
@@ -192,3 +194,8 @@ def pickle_load(file):
         loadout = pickle.load(f, encoding='latin1')
 
     return loadout
+
+def truncate_pose_smplx2smpl(poses):
+	smplx = poses.reshape(-1, 55, 3)
+	smpl = tf.concat([smplx[:,:22], smplx[:,25:26], smplx[:,40:41]], axis=1)
+	return smpl.reshape(-1, 72)

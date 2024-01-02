@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import tensorflow as tf
+import wandb
 
 from time import time
 from datetime import timedelta
@@ -14,26 +15,24 @@ from Losses import *
 # from LossesRay import *
 
 from util import *
-from IO import writePC2Frames
+from IO import writePC2Frames, write_obj
+
+
 
 """ PARSE ARGS """
 # if len(parse_args()) == 4:
 	# gpu_id, name, folder, checkpoint = parse_args()
-gpu_id, name, folder, checkpoint= '1', '00123_Inner', '00123_Inner', None
+gpu_id, name, folder, checkpoint= '0', '00185_lower', '00185_lower', None
 # object, body
-type = folder.split('_')[-1]
-type = 'pants' if type.lower() == "template" else type.lower()
+type = folder.split('_')[-1].lower()
 object = f"../Templates/{folder}/{type}"
 body = f"../Templates/{folder}/{folder}"
 rest_pose = pickle_load(os.path.dirname(os.path.realpath(__file__))+f"/Templates/{folder}/restpose.pkl")
 
-# if len(parse_args()) == 5:
-# 	gpu_id, name, object, body, checkpoint = parse_args()
-# 	rest_pose = np.zeros((24,3))
-# 	rest_pose[0, 0] = np.pi / 2
-# 	rest_pose[1, 2] = .15
-# 	rest_pose[2, 2] = -.15
-
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="pbns",
+)
 
 if checkpoint is not None:
 	checkpoint = os.path.abspath(os.path.dirname(__file__)) + '/checkpoints/' + checkpoint
@@ -48,7 +47,7 @@ if name == 'test': stdout_steps = 1
 
 """ TRAIN PARAMS """
 batch_size = 16
-num_epochs = 10 if checkpoint is None else 10000
+num_epochs = 50 if checkpoint is None else 10000
 
 """ SIMULATION PARAMETERS """
 edge_young = 15
@@ -86,6 +85,11 @@ for epoch in range(num_epochs):
 		""" Train step """
 		with tf.GradientTape() as tape:
 			pred = model(poses, G, np.array(tr_data.SMPL.transl))
+			# ###############
+			# write_obj(r"/home/borong/Desktop/PBNS/PBNS/results/pred_outfit.obj", pred, model._F)
+			# write_obj(r"/home/borong/Desktop/PBNS/PBNS/results/pred_body.obj", body, model._body_faces)
+			# breakpoint()
+			# ###############
 			# Losses & Metrics			
 			# cloth
 			L_edge, E_edge = edge_loss(pred, model._edges, model._E, weights=model._config['edge'])
@@ -139,5 +143,11 @@ for epoch in range(num_epochs):
 	print("Total collision: [" + ', '.join(['{:.4f}'.format(m) for m in metrics[3]]) + ']')
 	print("Total time: " + str(timedelta(seconds=total_time)))
 	print("")
+	wandb.log({
+		"Total_edge": 1000 * metrics[0],
+		"Total_bending": metrics[1],
+		"Total_gravity": metrics[2],
+		"Total_collision": metrics[3],
+	})
 	""" Save checkpoint """
 	model.save('checkpoints/' + name)
